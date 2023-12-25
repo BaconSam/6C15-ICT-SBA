@@ -1,0 +1,50 @@
+***main ui***
+>create comp list >edit comp list
+
+>create comp list
+  check tmp.csv
+    if empty, then continue
+    if not empty, >clear >resume >cancel
+
+    >clear
+      empty tmp.csv
+      init tmp.csv
+      
+    >resume
+      goto input page
+
+    >cancel
+      return main ui
+
+>edit comp list
+  user add *.csv
+  check tmp.csv
+    if empty, then write *.csv into tmp.csv and continue
+    if not empty, >clear >cancel
+
+    >clear
+      empty tmp.csv
+      write *.csv into tmp.csv
+
+
+-----------
+***main ui***
+>resume (if tmp.csv not empty) >create
+
+>resume
+  read from tmp.csv
+  goto input/edit ui
+
+>create
+  if tmp.csv not empty, ask >clear >resume >cancel
+
+  >clear
+    empty, init tmp.csv
+    continue
+
+  >resume as ln34
+
+  >cancel
+    return main ui
+
+  goto input/edit ui
