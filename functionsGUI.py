@@ -65,5 +65,21 @@ def Validation(event, values,df):
   return err_message
 
 
+def Menu_Fn(window,event):
+  if event == 'About...':
+            window.disappear()
+            sg.popup('About this program', 'Simulated Menubar to accompany a simulated Titlebar',
+                     'PySimpleGUI Version', sg.get_versions(),  grab_anywhere=True, keep_on_top=True)
+            window.reappear()
+  elif event == 'Edit Me':
+            sg.execute_editor(__file__)
+  elif event == 'Version':
+            sg.popup_scrolled(__file__, sg.get_versions(), keep_on_top=True, non_blocking=True)
+  elif event.startswith('Open'):
+            filename = sg.popup_get_file('file to open', no_window=True)
+            print(filename)
+
+
+
 
   
