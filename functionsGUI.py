@@ -1,17 +1,42 @@
 import PySimpleGUI as sg
 import pandas as pd
 import numpy as np
+import os
 
 
-def InitCSV():
-    df_tmp = pd.read_csv('data/temp.csv')
-    if not df_tmp.empty:
-        df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', 'CNUM', '-HOUSE-', '-SEED-'])
+def InitCSV(pathname):
+    if os.path.exists(pathname):
+      try:
+        df_tmp = pd.read_csv(pathname)
+      except pd.errors.EmptyDataError:
+        df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+        df_tmp.to_csv('data/temp.csv', index = False)
+        return df_tmp
+
+      if set(['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-']).issubset(df_tmp.columns):
+        if not df_tmp.empty:
+          if pathname == 'data/temp.csv':
+            if sg.popup_ok_cancel('Work in progress detected.\nDo you want to resume?') == 'OK':
+              df_tmp.to_csv('data/temp.csv', index = False)
+              return df_tmp
+            else:
+              df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+              df_tmp.to_csv('data/temp.csv', index = False)
+              return df_tmp
+          else:
+              df_tmp.to_csv('data/temp.csv', index = False)
+              return df_tmp
+        else:
+            df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+            df_tmp.to_csv('data/temp.csv', index = False)
+            return df_tmp
+      else:
+        df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
         df_tmp.to_csv('data/temp.csv', index = False)
     else:
-      print("Initialization failed\nContent in temp.csv is not cleared")
-      sg.popup_error("Initialization failed\nContent in temp.csv is not cleared")
-    return df_tmp
+      df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+      df_tmp.to_csv('data/temp.csv', index = False)
+      return df_tmp
 
 
 
@@ -74,20 +99,27 @@ def clearInput(window):
    
 
 
-def Menu_Fn(window,event):
+def Menu_Fn(window,event,df_tmp):
   if event == 'About...':
             window.disappear()
-            sg.popup('About this program', 'Simulated Menubar to accompany a simulated Titlebar',
+            sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA',
                      'PySimpleGUI Version', sg.get_versions(),  grab_anywhere=True, keep_on_top=True)
             window.reappear()
-  elif event == 'Version':
-            sg.popup_scrolled(__file__, sg.get_versions(), keep_on_top=True, non_blocking=True)
   elif event.startswith('Open'):
-            filename = sg.popup_get_file('file to open', no_window=True, file_types=(("Comma-Separated Values", "*.csv*"),))
-            df_ = pd.read_csv(filename)
-            return 
+            filename = sg.popup_get_file('file to open', no_window=True, file_types=(("CSV Files", "*.csv*"),))
+            if filename:
+              try:
+                InitCSV(filename)
+              except pd.errors.EmptyDataError:
+                 sg.popup_error('Failed to open file.\nThe CSV is empty.')
   elif event.startswith('New'):
-            clearInput(window)
+            if not df_tmp.empty:
+              if sg.popup_ok_cancel('Will clear CSV in progress and Create new one.\nThis process can not be undone.') == 'OK':
+                clearInput(window)
+                df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+                df_tmp.to_csv('data/temp.csv', index = False)
+  elif event.startswith('Save'):
+            df_tmp.to_csv('data/temp.csv', index = False)
             
 
 
