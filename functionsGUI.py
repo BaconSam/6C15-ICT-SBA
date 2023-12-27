@@ -2,6 +2,8 @@ import PySimpleGUI as sg
 import pandas as pd
 import numpy as np
 import os
+import math
+import random
 
 
 def InitCSV(pathname):
@@ -49,6 +51,8 @@ def Validation(event, values,df):
   if values['-NAME-'] != '':
     if any(char.isdigit() for char in values['-NAME-']):
       err_message += 'Name should not contain any numbers. \n'
+  elif values['-NAME-'] in ('bye','Bye'):
+    err_message += 'Name "Bye" is not allowed. \n'
   else:
     err_message += 'Name field should not be empty. \n'
   
@@ -102,7 +106,7 @@ def clearInput(window):
 def Menu_Fn(window,event,df_tmp,row):
   if event == 'About...':
             window.disappear()
-            sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA',
+            sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA','Ver 1.0',
                      'PySimpleGUI Version', sg.get_versions(),  grab_anywhere=True, keep_on_top=True)
             window.reappear()
 
@@ -149,7 +153,72 @@ def Menu_Fn(window,event,df_tmp,row):
      return df_tmp
             
 
+def Generate(df_tmp):
+  df = df_tmp
+
+  df_final = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
+  while math.log(len(df),2)%1 != 0:
+    dummy = pd.DataFrame({'-NAME-':['bye'],'-CLASS-':['None'],'-CNUM-':['None'],'-HOUSE-':['None'],'-SEED-':[False]})
+    line = random.randrange(0,len(df))
+    df = pd.concat([df.iloc[:line], dummy, df.iloc[line:]], ignore_index=True)
+
+  while not df.empty:
+    idx = len(df)-1
+    begin = df.iloc[idx]
+    df_final = pd.concat([df_final, begin.to_frame().T], ignore_index=True)
+
+    df = df.drop(labels=idx,axis=0)
+    df = df.reset_index(drop=True)
+    print(begin['-HOUSE-'])
+    for i in range(idx):
+      if df.iloc[i, 3] != begin['-HOUSE-']:
+        if df.iloc[i, 4] != begin['-SEED-']:
+            df_final = pd.concat([df_final, df.iloc[i].to_frame().T], ignore_index=True)
+            df = df.drop(labels=i,axis=0)
+            df = df.reset_index(drop=True)
+            break
+  moveSeed = int(math.ceil(float(len(df_final[df_final["-SEED-"] == True]))/2)*2)
+  for j in range(moveSeed):
+    sad = [k for k in range(len(df_final)) if k != 0] + [0]
+    df_final = df_final.iloc[sad].reset_index(drop=True)
 
 
 
-  
+  print(df_final)
+  return df_final
+
+def finalPopup(df_final, df_tmp):
+    headers = {'    NAME    ': []}
+    headings = list(headers)
+    
+    # Convert the values in the "-NAME-" column to a list, handling float values appropriately
+    CSValues = df_final["-NAME-"].apply(lambda x: [x] if isinstance(x, float) else x).values.tolist()
+
+    table = [
+        [sg.Table(values=CSValues, headings=headings,
+                  auto_size_columns=False,
+                  col_widths=list(map(lambda x: len(x) + 1, headings)),
+                  key='-PTABLE-',
+                  alternating_row_color='gray')],
+        [sg.T('*Only the position of "bye" will change while regenerating')],
+        [sg.B('Confirm'), sg.B('Regenerate'), sg.B('Cancel')]
+    ]
+    Pwindow = sg.Window('POPUP', table, modal=True)
+
+    while True:
+        event, value = Pwindow.read()
+        if event == sg.WIN_CLOSED or event == 'Cancel':
+            break
+        print(event)
+        if event == 'Confirm':
+            df_final[["-NAME-", "-CLASS-", "-HOUSE-"]].to_csv('output.csv', index=False)
+            sg.popup('Output Successful\nCheck output.csv in the root folder.')
+            break
+        elif event == 'Cancel':
+            break
+        elif event == 'Regenerate':
+            df_final = Generate(df_tmp)
+            CSValues = df_final.values.tolist()
+            Pwindow['-PTABLE-'].update(values=CSValues)
+
+    Pwindow.close()

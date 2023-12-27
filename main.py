@@ -2,9 +2,13 @@ from functionsGUI import *
 import PySimpleGUI as sg
 import pandas as pd
 import numpy as np
+import os
 
 # main
 def main():
+    if os.path.exists('data/') == False:
+      os.makedirs('data/')
+
     # Define thme
     sg.theme('Dark2')
 
@@ -37,7 +41,7 @@ def main():
               auto_size_columns=False,
               col_widths=list(map(lambda x:len(x)+1, headings)),
               key='-TABLE-',
-              alternating_row_color='lightyellow',
+              alternating_row_color='gray',
               enable_click_events=True)]]
 
     # Start Window
@@ -45,7 +49,7 @@ def main():
             [sg.MenubarCustom(menu_def, pad=(0,0), k='-CUST MENUBAR-')],
             [sg.Col(layout, p=0), sg.Col(Dtable, p=0)]
             ]
-    window = sg.Window('Badminton Matchmaking Generator Indev', final, return_keyboard_events=True)
+    window = sg.Window('Badminton Matchmaking Generator v1.0', final, return_keyboard_events=True)
 
     # Check & Write Data
     selected_row = None
@@ -84,7 +88,15 @@ def main():
         df_tmp = Menu_Fn(window,event,df_tmp,selected_row)
         if selected_row != None:
           selected_row = str(int(selected_row) -1)
-      
+        if event == '-GEN-' or event.startswith('Generate'):
+          if df_tmp.empty:
+            sg.popup_error('Cannot generate chart with empty file.')
+          else:
+            
+              df_final = Generate(df_tmp)
+              finalPopup(df_final,df_tmp)
+            
+
       
       
 
