@@ -99,27 +99,54 @@ def clearInput(window):
    
 
 
-def Menu_Fn(window,event,df_tmp):
+def Menu_Fn(window,event,df_tmp,row):
   if event == 'About...':
             window.disappear()
             sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA',
                      'PySimpleGUI Version', sg.get_versions(),  grab_anywhere=True, keep_on_top=True)
             window.reappear()
+
   elif event.startswith('Open'):
             filename = sg.popup_get_file('file to open', no_window=True, file_types=(("CSV Files", "*.csv*"),))
             if filename:
               try:
-                InitCSV(filename)
+                df_tmp = InitCSV(filename)
+                CSValues = df_tmp.values.tolist()
+                window['-TABLE-'].update(values=CSValues)
+                return df_tmp
               except pd.errors.EmptyDataError:
                  sg.popup_error('Failed to open file.\nThe CSV is empty.')
+
   elif event.startswith('New'):
             if not df_tmp.empty:
               if sg.popup_ok_cancel('Will clear CSV in progress and Create new one.\nThis process can not be undone.') == 'OK':
                 clearInput(window)
                 df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
                 df_tmp.to_csv('data/temp.csv', index = False)
+                df_tmp = InitCSV('data/temp.csv')
+                CSValues = df_tmp.values.tolist()
+                window['-TABLE-'].update(values=CSValues)
+                return df_tmp
+              
   elif event.startswith('Save'):
             df_tmp.to_csv('data/temp.csv', index = False)
+            return df_tmp
+  elif event.startswith('Delete'):
+      if row != None:
+        if int(row) < 0:
+          sg.popup_error('Reached the top of the table')
+        else:
+          print(row)
+          df_tmp = df_tmp.drop(labels=int(row),axis=0)
+          df_tmp = df_tmp.reset_index(drop=True)
+          print(df_tmp.head(10))
+          CSValues = df_tmp.values.tolist()
+          window['-TABLE-'].update(values=CSValues)
+      else:
+         sg.popup_error('No row was selected.')
+      return df_tmp
+  else:
+     return df_tmp
             
 
 
