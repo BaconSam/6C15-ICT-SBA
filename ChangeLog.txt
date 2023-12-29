@@ -1,0 +1,14 @@
+-----v1.1-----
+Changes:
+	Enhanced Rearrangement Algorithm(better result)
+	Output Screen is now more visually appealing
+	More Useful output is displayed instead
+
+-----v1-----
+Initial Version:
+
+Functions:
+	Accept user's input(by hand or CSV)
+	Create, Save, and Open Files
+	Preview their input
+	Generate rearranged output(kinda broken)
