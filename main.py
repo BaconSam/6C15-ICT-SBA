@@ -49,7 +49,7 @@ def main():
             [sg.MenubarCustom(menu_def, pad=(0,0), k='-CUST MENUBAR-')],
             [sg.Col(layout, p=0), sg.Col(Dtable, p=0)]
             ]
-    window = sg.Window('Badminton Matchmaking Generator v1.0', final, return_keyboard_events=True)
+    window = sg.Window('Badminton Matchmaking Generator v1.1', final, return_keyboard_events=True)
 
     # Check & Write Data
     selected_row = None
@@ -60,9 +60,7 @@ def main():
           if not df_tmp.empty:
             if sg.popup_ok_cancel('Do you want to save your progress?') == 'OK':
               df_tmp.to_csv('data/temp.csv', index = False)
-            else:
-              df_tmp = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
-              df_tmp.to_csv('data/temp.csv', index = False)
+            
 
           break
       
@@ -78,6 +76,7 @@ def main():
           print(df_tmp.head())
           CSValues = df_tmp.values.tolist()
           window['-TABLE-'].update(values=CSValues)
+          clearInput(window)
           
       if isinstance(event, tuple):
         if event[2][0] != -1:

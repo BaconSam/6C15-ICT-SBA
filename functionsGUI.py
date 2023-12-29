@@ -106,7 +106,7 @@ def clearInput(window):
 def Menu_Fn(window,event,df_tmp,row):
   if event == 'About...':
             window.disappear()
-            sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA','Ver 1.0',
+            sg.popup('About this program', 'This is a program for the Badminton Competition', 'NLSI LKPFC F6 ICT SBA','Ver 1.1',
                      'PySimpleGUI Version', sg.get_versions(),  grab_anywhere=True, keep_on_top=True)
             window.reappear()
 
@@ -154,6 +154,7 @@ def Menu_Fn(window,event,df_tmp,row):
             
 
 def Generate(df_tmp):
+  cringe =[]
   df = df_tmp
 
   df_final = pd.DataFrame(columns = ['-NAME-', '-CLASS-', '-CNUM-', '-HOUSE-', '-SEED-'])
@@ -161,22 +162,44 @@ def Generate(df_tmp):
     dummy = pd.DataFrame({'-NAME-':['bye'],'-CLASS-':['None'],'-CNUM-':['None'],'-HOUSE-':['None'],'-SEED-':[False]})
     line = random.randrange(0,len(df))
     df = pd.concat([df.iloc[:line], dummy, df.iloc[line:]], ignore_index=True)
+  print(df)
 
   while not df.empty:
+    found = False
     idx = len(df)-1
     begin = df.iloc[idx]
     df_final = pd.concat([df_final, begin.to_frame().T], ignore_index=True)
 
     df = df.drop(labels=idx,axis=0)
     df = df.reset_index(drop=True)
-    print(begin['-HOUSE-'])
     for i in range(idx):
       if df.iloc[i, 3] != begin['-HOUSE-']:
         if df.iloc[i, 4] != begin['-SEED-']:
-            df_final = pd.concat([df_final, df.iloc[i].to_frame().T], ignore_index=True)
-            df = df.drop(labels=i,axis=0)
-            df = df.reset_index(drop=True)
+            found = True
             break
+      elif df.iloc[i, 4] != begin['-SEED-']:
+        found = True
+        break
+      
+    
+    if found == True:
+      df_final = pd.concat([df_final, df.iloc[i].to_frame().T], ignore_index=True)
+      df = df.drop(labels=i,axis=0)
+      df = df.reset_index(drop=True)
+    else:
+      cringe.append(df.iloc[i])
+      print(cringe)
+      df = df.drop(labels=i,axis=0)
+      df = df.reset_index(drop=True)
+    
+  
+  while cringe:
+    if len(cringe) == 1:
+      pop = cringe.pop(0)
+    else:
+      pop = cringe.pop(random.randrange(0,len(cringe)-1))
+    df_final = pd.concat([df_final, pop.to_frame().T], ignore_index=True)
+
   moveSeed = int(math.ceil(float(len(df_final[df_final["-SEED-"] == True]))/2)*2)
   for j in range(moveSeed):
     sad = [k for k in range(len(df_final)) if k != 0] + [0]
@@ -188,22 +211,22 @@ def Generate(df_tmp):
   return df_final
 
 def finalPopup(df_final, df_tmp):
-    headers = {'    NAME    ': []}
+    headers = {'    NAME    ': [], 'House': [], 'Seed': []}
     headings = list(headers)
     
     # Convert the values in the "-NAME-" column to a list, handling float values appropriately
-    CSValues = df_final["-NAME-"].apply(lambda x: [x] if isinstance(x, float) else x).values.tolist()
+    CSValues = df_final[["-NAME-","-HOUSE-","-SEED-"]].apply(lambda x: [x] if isinstance(x, float) else x).values.tolist()
 
     table = [
         [sg.Table(values=CSValues, headings=headings,
                   auto_size_columns=False,
                   col_widths=list(map(lambda x: len(x) + 1, headings)),
                   key='-PTABLE-',
-                  alternating_row_color='gray')],
-        [sg.T('*Only the position of "bye" will change while regenerating')],
+                  alternating_row_color='gray',
+                  num_rows=16)],
         [sg.B('Confirm'), sg.B('Regenerate'), sg.B('Cancel')]
     ]
-    Pwindow = sg.Window('POPUP', table, modal=True)
+    Pwindow = sg.Window('Output Generated!', table, modal=True,resizable=True)
 
     while True:
         event, value = Pwindow.read()
@@ -211,14 +234,14 @@ def finalPopup(df_final, df_tmp):
             break
         print(event)
         if event == 'Confirm':
-            df_final[["-NAME-", "-CLASS-", "-HOUSE-"]].to_csv('output.csv', index=False)
+            df_final.to_csv('output.csv', index=False)
             sg.popup('Output Successful\nCheck output.csv in the root folder.')
             break
         elif event == 'Cancel':
             break
         elif event == 'Regenerate':
             df_final = Generate(df_tmp)
-            CSValues = df_final.values.tolist()
+            CSValues = df_final[["-NAME-","-HOUSE-","-SEED-"]].values.tolist()
             Pwindow['-PTABLE-'].update(values=CSValues)
 
     Pwindow.close()
